@@ -38,3 +38,8 @@ type Campaign struct {
 	SQL       string `json:"sql"`
 	UpdateSQL string `json:"updatesql"`
 }
+
+//ListCampaign for list
+type ListCampaign struct {
+	Campaigns []Campaign `json:"campaign"`
+}

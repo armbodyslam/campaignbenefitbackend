@@ -49,6 +49,8 @@ func main() {
 	mainRouter := mux.NewRouter().StrictSlash(true)
 	mainRouter.HandleFunc("/campaign", index)
 	mainRouter.HandleFunc("/campaign/getcampaign", getcampaign)
+	mainRouter.HandleFunc("/custprofilemaster/getcustprofile", getcustprofile)
+	mainRouter.HandleFunc("/packagemaster/getpackage", getpackage)
 	log.Fatal(http.ListenAndServe(":8000", mainRouter))
 }
 
@@ -64,6 +66,28 @@ func getcampaign(w http.ResponseWriter, r *http.Request) {
 
 	var res st.ListCampaign
 	res.Campaigns = db.GetCampaign()
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
+}
+
+func getcustprofile(w http.ResponseWriter, r *http.Request) {
+	// Create db connection to mongo
+	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "custprofilemaster")
+	var res st.ListCustProfileMaster
+	res.CustProfileMasters = db.GetCustProfile()
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
+
+}
+
+func getpackage(w http.ResponseWriter, r *http.Request) {
+
+	// Create db connection to mongo
+	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "packagemaster")
+	var res st.ListPackageMaster
+	res.PackageMasters = db.GetPackageMaster()
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(res)

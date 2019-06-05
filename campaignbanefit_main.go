@@ -51,6 +51,7 @@ func main() {
 	mainRouter.HandleFunc("/campaign/getcampaign", getcampaign)
 	mainRouter.HandleFunc("/custprofilemaster/getcustprofile", getcustprofile)
 	mainRouter.HandleFunc("/packagemaster/getpackage", getpackage)
+	mainRouter.HandleFunc("/previewproduct/getpreview", getpreview)
 	log.Fatal(http.ListenAndServe(":8000", mainRouter))
 }
 
@@ -88,6 +89,17 @@ func getpackage(w http.ResponseWriter, r *http.Request) {
 	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "packagemaster")
 	var res st.ListPackageMaster
 	res.PackageMasters = db.GetPackageMaster()
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
+}
+
+func getpreview(w http.ResponseWriter, r *http.Request) {
+
+	// Create db connection to mongo
+	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "previewproduct")
+	var res st.ListPreviewProduct
+	res.PreviewProducts = db.GetPreviewProduct()
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(res)

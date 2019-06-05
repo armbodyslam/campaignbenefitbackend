@@ -79,3 +79,28 @@ func (db *MongoDBInfo) GetPackageMaster() []st.PackageMaster {
 
 	return res
 }
+
+//GetPreviewProduct for get list PreviewProduct
+func (db *MongoDBInfo) GetPreviewProduct() []st.PreviewProduct {
+
+	session, err := mgo.Dial(db.URL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	// Optional. Switch the session to a monotonic behavior.
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB(db.database).C(db.collection)
+	res := []st.PreviewProduct{}
+
+	err = c.Find(nil).All(&res)
+
+	if err != nil {
+		return nil
+		//log.Fatal(err)
+	}
+
+	return res
+}

@@ -39,7 +39,37 @@ type Campaign struct {
 	UpdateSQL string `json:"updatesql"`
 }
 
+//GetCampaignResponse for response
+type GetCampaignResponse struct {
+	ErrorCode  int      `json:"errorcode"`
+	ErrorDesc  string   `json:"errordesc"`
+	MyCampaign Campaign `json:"campaign"`
+}
+
+// NewGetCampaignResponse Obj
+func NewGetCampaignResponse() *GetCampaignResponse {
+	return &GetCampaignResponse{
+		ErrorCode: 1,
+		ErrorDesc: "Unexpected Error",
+	}
+}
+
 //ListCampaign for list
 type ListCampaign struct {
 	Campaigns []Campaign `json:"campaign"`
+}
+
+//CreateCampaignResponse for response
+type CreateCampaignResponse struct {
+	ErrorCode   int    `json:"errorcode"`
+	ErrorDesc   string `json:"errordesc"`
+	ResultValue string `json:"resultvalue"`
+}
+
+// NewCreateCampaignResponse Obj
+func NewCreateCampaignResponse() *CreateCampaignResponse {
+	return &CreateCampaignResponse{
+		ErrorCode: 1,
+		ErrorDesc: "Unexpected Error",
+	}
 }

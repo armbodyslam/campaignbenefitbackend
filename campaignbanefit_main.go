@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -49,9 +50,14 @@ func main() {
 	mainRouter := mux.NewRouter().StrictSlash(true)
 	mainRouter.HandleFunc("/campaign", index)
 	mainRouter.HandleFunc("/campaign/getcampaign", getcampaign)
+	mainRouter.HandleFunc("/campaign/getlastcampaignid", getlastcampaignid)
+	mainRouter.HandleFunc("/campaign/getcampaign/{campaignid}", getcampaignbyid)
+	mainRouter.HandleFunc("/campaign/createcampaign", createcampaign).Methods("POST")
 	mainRouter.HandleFunc("/custprofilemaster/getcustprofile", getcustprofile)
 	mainRouter.HandleFunc("/packagemaster/getpackage", getpackage)
 	mainRouter.HandleFunc("/previewproduct/getpreview", getpreview)
+	mainRouter.HandleFunc("/offer/getoffer", getoffer)
+	mainRouter.HandleFunc("/keyword/getkeyword", getkeyword)
 	log.Fatal(http.ListenAndServe(":8000", mainRouter))
 }
 
@@ -70,6 +76,48 @@ func getcampaign(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(res)
+}
+
+func getcampaignbyid(w http.ResponseWriter, r *http.Request) {
+
+	params := mux.Vars(r)
+
+	var res *st.GetCampaignResponse
+
+	// Create db connection to mongo
+	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "campaign")
+
+	res = db.GetCampaignByID(params["campaignid"])
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
+
+}
+
+func createcampaign(w http.ResponseWriter, r *http.Request) {
+
+	// Create db connection to mongo
+	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "campaign")
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var req st.Campaign
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		panic(err)
+	}
+
+	var res *st.CreateCampaignResponse
+
+	res = db.CreateCampaign(req)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
+	//log.Println(req)
 }
 
 func getcustprofile(w http.ResponseWriter, r *http.Request) {
@@ -100,6 +148,39 @@ func getpreview(w http.ResponseWriter, r *http.Request) {
 	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "previewproduct")
 	var res st.ListPreviewProduct
 	res.PreviewProducts = db.GetPreviewProduct()
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
+}
+
+func getoffer(w http.ResponseWriter, r *http.Request) {
+
+	// Create db connection to mongo
+	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "offer")
+	var res st.ListOffer
+	res.Offers = db.GetOffer()
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
+}
+
+func getlastcampaignid(w http.ResponseWriter, r *http.Request) {
+
+	// Create db connection to mongo
+	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "campaign")
+
+	var res int
+	res = db.GetLastCampaignID()
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
+}
+
+func getkeyword(w http.ResponseWriter, r *http.Request) {
+
+	var res *st.GetListKeywordResult
+
+	res = GetKeyword()
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(res)

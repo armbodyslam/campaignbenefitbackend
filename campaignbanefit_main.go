@@ -53,11 +53,13 @@ func main() {
 	mainRouter.HandleFunc("/campaign/getlastcampaignid", getlastcampaignid)
 	mainRouter.HandleFunc("/campaign/getcampaign/{campaignid}", getcampaignbyid)
 	mainRouter.HandleFunc("/campaign/createcampaign", createcampaign).Methods("POST")
+	mainRouter.HandleFunc("/campaign/cancelcampaign", cancelcampaign).Methods("POST")
 	mainRouter.HandleFunc("/custprofilemaster/getcustprofile", getcustprofile)
 	mainRouter.HandleFunc("/packagemaster/getpackage", getpackage)
 	mainRouter.HandleFunc("/previewproduct/getpreview", getpreview)
 	mainRouter.HandleFunc("/offer/getoffer", getoffer)
 	mainRouter.HandleFunc("/keyword/getkeyword", getkeyword)
+	mainRouter.HandleFunc("/report/getreportcampaign/{campaignid}", getreportcampaignbyid)
 	log.Fatal(http.ListenAndServe(":8000", mainRouter))
 }
 
@@ -118,6 +120,33 @@ func createcampaign(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(res)
 	//log.Println(req)
+}
+
+func cancelcampaign(w http.ResponseWriter, r *http.Request) {
+
+	// Create db connection to mongo
+	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "campaign")
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var res *st.CancelCampaignResponse
+
+	var req st.CancelCampaignRequest
+
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+
+		panic(err)
+	}
+
+	res = db.CancelCampaign(req.CampaignID)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
 }
 
 func getcustprofile(w http.ResponseWriter, r *http.Request) {
@@ -181,6 +210,18 @@ func getkeyword(w http.ResponseWriter, r *http.Request) {
 	var res *st.GetListKeywordResult
 
 	res = GetKeyword()
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
+}
+
+func getreportcampaignbyid(w http.ResponseWriter, r *http.Request) {
+
+	params := mux.Vars(r)
+
+	var res *st.GetListReportCampignResponse
+
+	res = GetReportCampaignByID(params["campaignid"])
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(res)

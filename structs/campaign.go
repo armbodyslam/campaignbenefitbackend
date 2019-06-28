@@ -73,3 +73,23 @@ func NewCreateCampaignResponse() *CreateCampaignResponse {
 		ErrorDesc: "Unexpected Error",
 	}
 }
+
+// CancelCampaignRequest Obj
+type CancelCampaignRequest struct {
+	CampaignID int `json:"campaignid"`
+}
+
+// CancelCampaignResponse Obj
+type CancelCampaignResponse struct {
+	ErrorCode   int    `json:"errorcode"`
+	ErrorDesc   string `json:"errordesc"`
+	ResultValue string `json:"resultvalue"`
+}
+
+// NewCancelCampaignResponse Obj
+func NewCancelCampaignResponse() *CancelCampaignResponse {
+	return &CancelCampaignResponse{
+		ErrorCode: 1,
+		ErrorDesc: "Unexpected Error",
+	}
+}

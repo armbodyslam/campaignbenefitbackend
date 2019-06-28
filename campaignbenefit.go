@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"io"
 	"strconv"
+	"time"
 
 	_ "gopkg.in/goracle.v2"
 
@@ -341,5 +342,131 @@ func (db *MongoDBInfo) GetCampaignByID(ID string) *st.GetCampaignResponse {
 	res.ErrorCode = 0
 	res.ErrorDesc = ""
 
+	return res
+}
+
+//GetReportCampaignByID for get list report campaign
+func GetReportCampaignByID(campaignID string) *st.GetListReportCampignResponse {
+
+	res := st.NewGetListReportCampignResponse()
+
+	iCampaignID, err := strconv.Atoi(campaignID)
+	if err != nil {
+		res.ErrorCode = 2
+		res.ErrorDesc = err.Error()
+		return res
+	}
+
+	var dbsource string
+	dbsource = cm.GetDatasourceName("SIT62")
+	db, err := sql.Open("goracle", dbsource)
+	if err != nil {
+
+		res.ErrorCode = 3
+		res.ErrorDesc = err.Error()
+		return res
+	}
+	defer db.Close()
+
+	var statement string
+	statement = "begin TVS_CAMPAIGN.GetCampaignReportById(:0,:1); end;"
+	var resultC driver.Rows
+	if _, err := db.Exec(statement, iCampaignID, sql.Out{Dest: &resultC}); err != nil {
+
+		res.ErrorCode = 4
+		res.ErrorDesc = err.Error()
+		return res
+	}
+	defer resultC.Close()
+
+	values := make([]driver.Value, len(resultC.Columns()))
+	var oLReportCampaign []st.Reportcampign
+	var i int64
+	for {
+
+		colmap := cm.Createmapcol(resultC.Columns())
+		err = resultC.Next(values)
+		if err != nil {
+
+			if err == io.EOF {
+
+				break
+			}
+
+			res.ErrorCode = 5
+			res.ErrorDesc = err.Error()
+			return res
+		}
+
+		var oReportCampaign st.Reportcampign
+		i++
+		oReportCampaign.Runnumber = i
+		/* if values[cm.Getcolindex(colmap, "RUNNUMBER")] != nil {
+			g, _ := values[cm.Getcolindex(colmap, "RUNNUMBER")].(goracle.Number)
+			i := string(g)
+			oReportCampaign.Runnumber, _ = strconv.ParseInt(i, 10, 64)
+		} */
+		if values[cm.Getcolindex(colmap, "CUSTOMERNR")] != nil {
+			oReportCampaign.CustomerNR = values[cm.Getcolindex(colmap, "CUSTOMERNR")].(int64)
+		}
+
+		oReportCampaign.Fullname = values[cm.Getcolindex(colmap, "FULLNAME")].(string)
+		oReportCampaign.StatusResult = values[cm.Getcolindex(colmap, "STATUSRESULT")].(string)
+
+		if values[cm.Getcolindex(colmap, "OFFERDATE")] != nil {
+			oReportCampaign.OfferDate = values[cm.Getcolindex(colmap, "OFFERDATE")].(time.Time)
+		}
+
+		oLReportCampaign = append(oLReportCampaign, oReportCampaign)
+	}
+
+	//oListReportCampign.Reportcampigns = oLReportCampaign
+	res.Reportcampigns = oLReportCampaign
+
+	if res.Reportcampigns == nil {
+
+		res.ErrorCode = 6
+		res.ErrorDesc = "not found"
+	}
+
+	if res.ErrorCode == 1 {
+		res.ErrorCode = 0
+		res.ErrorDesc = "Success"
+	}
+
+	return res
+}
+
+//CancelCampaign for cancel campaign
+func (db *MongoDBInfo) CancelCampaign(campID int) *st.CancelCampaignResponse {
+
+	res := st.NewCancelCampaignResponse()
+
+	session, err := mgo.Dial(db.URL)
+	if err != nil {
+		res.ErrorCode = 2
+		res.ErrorDesc = err.Error()
+
+		return res
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB(db.database).C(db.collection)
+	err = c.Update(bson.M{"campaignid": campID}, bson.M{"$set": bson.M{"status": "C"}})
+	if err != nil {
+		res.ErrorCode = 3
+		res.ErrorDesc = err.Error()
+
+		return res
+		//log.Fatal(err)
+	}
+
+	if res.ErrorCode == 1 {
+		res.ErrorCode = 0
+		res.ErrorDesc = ""
+		res.ResultValue = "Success"
+	}
 	return res
 }

@@ -6,6 +6,12 @@
             "password": "bgweb#sms13",
 	        "connectionstring":"User Id=$User;Password=$Password;Data Source=$SERVERNAME;Min Pool Size=10;Incr Pool Size=5;Decr Pool Size=2"
         },
+        "SIT62": {
+            "dbname": "//172.22.246.188:1521/SIT62",
+            "username": "bgweb",
+            "password": "bgweb#1",
+	        "connectionstring":"User Id=$User;Password=$Password;Data Source=$SERVERNAME;Min Pool Size=10;Incr Pool Size=5;Decr Pool Size=2"
+        },
         "cache": {
             "address": "10.0.0.2",
             "port": 6379

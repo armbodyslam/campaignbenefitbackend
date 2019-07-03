@@ -30,7 +30,7 @@ func (db *MongoDBInfo) GetCampaign() []st.Campaign {
 	c := session.DB(db.database).C(db.collection)
 	res := []st.Campaign{}
 
-	err = c.Find(bson.M{"status": "A"}).All(&res)
+	err = c.Find(bson.M{"status": "A"}).Sort("-campaignid").All(&res)
 
 	if err != nil {
 		return nil
@@ -467,6 +467,67 @@ func (db *MongoDBInfo) CancelCampaign(campID int) *st.CancelCampaignResponse {
 		res.ErrorCode = 0
 		res.ErrorDesc = ""
 		res.ResultValue = "Success"
+		return res
 	}
+	return res
+}
+
+//SearchCampaign for Search Campaign
+func (db *MongoDBInfo) SearchCampaign(campSearch st.SearchCampaignRequest) []st.Campaign {
+
+	session, err := mgo.Dial(db.URL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	// Optional. Switch the session to a monotonic behavior.
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB(db.database).C(db.collection)
+
+	var camID bson.M
+	if campSearch.CampaignID == 0 {
+		camID = bson.M{"campaignid": bson.M{"$gt": 0}}
+	} else {
+		camID = bson.M{"campaignid": campSearch.CampaignID}
+	}
+
+	camName := bson.M{"campaignname": bson.M{"$regex": campSearch.CampaignName, "$options": "i"}}
+
+	var camStartDate bson.M
+	if campSearch.StartDate.IsZero() {
+		camStartDate = bson.M{"startdate": bson.M{"$gt": campSearch.StartDate}}
+	} else {
+		camStartDate = bson.M{"startdate": bson.M{"$eq": campSearch.StartDate}}
+	}
+
+	var camEndDate bson.M
+	if campSearch.EndDate.IsZero() {
+		camEndDate = bson.M{"enddate": bson.M{"$gt": campSearch.EndDate}}
+	} else {
+		camEndDate = bson.M{"enddate": bson.M{"$eq": campSearch.EndDate}}
+	}
+
+	camScheduleType := bson.M{"schedule.type": bson.M{"$regex": campSearch.Schedule.Type,
+		"$options": "i"}}
+	camScheduleExecute := bson.M{"schedule.execute": bson.M{"$regex": campSearch.Schedule.Execute,
+		"$options": "i"}}
+	/*
+
+
+		sort := bson.M{"$sort": bson.M{"campaignid": -1}} */
+
+	//operation := []bson.M{camID, camName}
+
+	var res []st.Campaign
+
+	err = c.Find(bson.M{"$and": []bson.M{camID, camName, camStartDate, camEndDate, camScheduleType,
+		camScheduleExecute}}).Sort("-campaignid").All(&res)
+	if err != nil {
+		return nil
+		//log.Fatal(err)
+	}
+
 	return res
 }

@@ -93,3 +93,15 @@ func NewCancelCampaignResponse() *CancelCampaignResponse {
 		ErrorDesc: "Unexpected Error",
 	}
 }
+
+// SearchCampaignRequest Obj
+type SearchCampaignRequest struct {
+	CampaignID   int       `json:"campaignid"`
+	CampaignName string    `json:"campaignname"`
+	StartDate    time.Time `bson:"startdate"`
+	EndDate      time.Time `bson:"enddate"`
+	Schedule     struct {
+		Type    string `json:"type"`
+		Execute string `json:"execute"`
+	} `json:"schedule"`
+}

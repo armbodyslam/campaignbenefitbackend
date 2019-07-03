@@ -54,6 +54,7 @@ func main() {
 	mainRouter.HandleFunc("/campaign/getcampaign/{campaignid}", getcampaignbyid)
 	mainRouter.HandleFunc("/campaign/createcampaign", createcampaign).Methods("POST")
 	mainRouter.HandleFunc("/campaign/cancelcampaign", cancelcampaign).Methods("POST")
+	mainRouter.HandleFunc("/campaign/searchcampaign", searchcampaign).Methods("POST")
 	mainRouter.HandleFunc("/custprofilemaster/getcustprofile", getcustprofile)
 	mainRouter.HandleFunc("/packagemaster/getpackage", getpackage)
 	mainRouter.HandleFunc("/previewproduct/getpreview", getpreview)
@@ -144,6 +145,29 @@ func cancelcampaign(w http.ResponseWriter, r *http.Request) {
 
 	res = db.CancelCampaign(req.CampaignID)
 
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(res)
+}
+
+func searchcampaign(w http.ResponseWriter, r *http.Request) {
+
+	// Create db connection to mongo
+	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "campaign")
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var req st.SearchCampaignRequest
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		panic(err)
+	}
+
+	var res st.ListCampaign
+	res.Campaigns = db.SearchCampaign(req)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(res)

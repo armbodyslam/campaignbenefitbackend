@@ -13,11 +13,28 @@ type Reportcampign struct {
 	OfferDate    time.Time `json:"offerdate"`
 }
 
+//GetListReportCampignRequest obj
+type GetListReportCampignRequest struct {
+	CampaignID int64        `json:"campaignid"`
+	Fullname   string       `json:"fullname"`
+	CustomerNR int64        `json:"customernr"`
+	PageSize   int64        `json:"pagesize"`
+	Page       int64        `json:"page"`
+	Sorted     []SortReport `json:"sorted"`
+}
+
+// SortReport Obj
+type SortReport struct {
+	ID   string `json:"id"`
+	Desc bool   `json:"desc"`
+}
+
 //GetListReportCampignResponse obj
 type GetListReportCampignResponse struct {
 	ErrorCode      int             `json:"errorcode"`
 	ErrorDesc      string          `json:"errordesc"`
 	Reportcampigns []Reportcampign `json:"reportcampign"`
+	Pages          int64           `json:"pages"`
 }
 
 // NewGetListReportCampignResponse Obj

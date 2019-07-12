@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"io"
+	"math"
 	"strconv"
 	"time"
 
 	_ "gopkg.in/goracle.v2"
+	goracle "gopkg.in/goracle.v2"
 
 	cm "github.com/armbodyslam/campaignbenefitbackend/common"
 	st "github.com/armbodyslam/campaignbenefitbackend/structs"
@@ -346,16 +348,32 @@ func (db *MongoDBInfo) GetCampaignByID(ID string) *st.GetCampaignResponse {
 }
 
 //GetReportCampaignByID for get list report campaign
-func GetReportCampaignByID(campaignID string) *st.GetListReportCampignResponse {
+func GetReportCampaignByID(reportSearch st.GetListReportCampignRequest) *st.GetListReportCampignResponse {
 
 	res := st.NewGetListReportCampignResponse()
+	//
+	iCampaignID := reportSearch.CampaignID
+	iFullName := reportSearch.Fullname
+	iCustomernr := reportSearch.CustomerNR
+	pageNo := reportSearch.Page
+	size := reportSearch.PageSize
+	csort := "offerdate"
+	desc := "desc"
 
-	iCampaignID, err := strconv.Atoi(campaignID)
-	if err != nil {
+	if len(reportSearch.Sorted) > 0 {
+		csort = reportSearch.Sorted[0].ID
+		if !reportSearch.Sorted[0].Desc {
+			desc = "asc"
+		}
+	}
+
+	if pageNo <= 0 {
 		res.ErrorCode = 2
-		res.ErrorDesc = err.Error()
+		res.ErrorDesc = "invalid page number, should start with 1"
 		return res
 	}
+
+	skip := size * (pageNo - 1)
 
 	var dbsource string
 	dbsource = cm.GetDatasourceName("SIT62")
@@ -369,15 +387,22 @@ func GetReportCampaignByID(campaignID string) *st.GetListReportCampignResponse {
 	defer db.Close()
 
 	var statement string
-	statement = "begin TVS_CAMPAIGN.GetCampaignReportById(:0,:1); end;"
 	var resultC driver.Rows
-	if _, err := db.Exec(statement, iCampaignID, sql.Out{Dest: &resultC}); err != nil {
+	var resultCount driver.Rows
 
-		res.ErrorCode = 4
+	var totalCount int64
+
+	statement = "begin TVS_CAMPAIGN.GetCampaignReportById(:0,:1,:2,:3,:4,:5,:6,:7,:8); end;"
+	//var resultC driver.Rows
+	if _, err := db.Exec(statement, iCampaignID, iFullName, iCustomernr, skip, size, csort, desc, sql.Out{Dest: &resultC},
+		sql.Out{Dest: &resultCount}); err != nil {
+
+		res.ErrorCode = 5
 		res.ErrorDesc = err.Error()
 		return res
 	}
 	defer resultC.Close()
+	defer resultCount.Close()
 
 	values := make([]driver.Value, len(resultC.Columns()))
 	var oLReportCampaign []st.Reportcampign
@@ -393,7 +418,7 @@ func GetReportCampaignByID(campaignID string) *st.GetListReportCampignResponse {
 				break
 			}
 
-			res.ErrorCode = 5
+			res.ErrorCode = 6
 			res.ErrorDesc = err.Error()
 			return res
 		}
@@ -419,6 +444,34 @@ func GetReportCampaignByID(campaignID string) *st.GetListReportCampignResponse {
 
 		oLReportCampaign = append(oLReportCampaign, oReportCampaign)
 	}
+
+	values = make([]driver.Value, len(resultCount.Columns()))
+	for {
+
+		colmap := cm.Createmapcol(resultCount.Columns())
+		err = resultCount.Next(values)
+		if err != nil {
+
+			if err == io.EOF {
+
+				break
+			}
+
+			res.ErrorCode = 6
+			res.ErrorDesc = err.Error()
+			return res
+		}
+
+		if values[cm.Getcolindex(colmap, "COUNTREPORT")] != nil {
+			g, _ := values[cm.Getcolindex(colmap, "COUNTREPORT")].(goracle.Number)
+			i := string(g)
+			totalCount, _ = strconv.ParseInt(i, 10, 64)
+		}
+	}
+
+	d := float64(totalCount) / float64(size)
+	totalPages := int(math.Ceil(d))
+	res.Pages = int64(totalPages)
 
 	//oListReportCampign.Reportcampigns = oLReportCampaign
 	res.Reportcampigns = oLReportCampaign
@@ -473,11 +526,42 @@ func (db *MongoDBInfo) CancelCampaign(campID int) *st.CancelCampaignResponse {
 }
 
 //SearchCampaign for Search Campaign
-func (db *MongoDBInfo) SearchCampaign(campSearch st.SearchCampaignRequest) []st.Campaign {
+func (db *MongoDBInfo) SearchCampaign(campSearch st.SearchCampaignRequest) *st.SearchCampaignResponse {
+
+	res := st.NewSearchCampaignResponse()
+
+	var sorted string
+
+	//var checkArraySort []st.SortCampaign
+
+	if len(campSearch.Sorted) > 0 {
+		if campSearch.Sorted[0].Desc {
+
+			sorted = "-" + campSearch.Sorted[0].ID
+		} else {
+			sorted = campSearch.Sorted[0].ID
+		}
+	} else {
+		sorted = "-campaignid"
+	}
+
+	pageNo := campSearch.Page
+	size := campSearch.PageSize
+
+	if pageNo <= 0 {
+		res.ErrorCode = 2
+		res.ErrorDesc = "invalid page number, should start with 1"
+		return res
+	}
+
+	skip := size * (pageNo - 1)
 
 	session, err := mgo.Dial(db.URL)
 	if err != nil {
-		panic(err)
+
+		res.ErrorCode = 3
+		res.ErrorDesc = err.Error()
+		return res
 	}
 	defer session.Close()
 
@@ -513,20 +597,38 @@ func (db *MongoDBInfo) SearchCampaign(campSearch st.SearchCampaignRequest) []st.
 		"$options": "i"}}
 	camScheduleExecute := bson.M{"schedule.execute": bson.M{"$regex": campSearch.Schedule.Execute,
 		"$options": "i"}}
-	/*
 
+	camStatus := bson.M{"status": "A"}
 
-		sort := bson.M{"$sort": bson.M{"campaignid": -1}} */
+	totalCount, err := c.Find(bson.M{"$and": []bson.M{camID, camName, camStartDate, camEndDate, camScheduleType,
+		camScheduleExecute, camStatus}}).Sort("-campaignid").Count()
+	if err != nil {
 
-	//operation := []bson.M{camID, camName}
+		res.ErrorCode = 4
+		res.ErrorDesc = err.Error()
+		return res
+		//log.Fatal(err)
+	}
 
-	var res []st.Campaign
+	d := float64(totalCount) / float64(size)
+	totalPages := int(math.Ceil(d))
 
 	err = c.Find(bson.M{"$and": []bson.M{camID, camName, camStartDate, camEndDate, camScheduleType,
-		camScheduleExecute}}).Sort("-campaignid").All(&res)
+		camScheduleExecute, camStatus}}).Sort(sorted).Skip(skip).Limit(size).All(&res.Campaigns)
 	if err != nil {
-		return nil
+
+		res.ErrorCode = 5
+		res.ErrorDesc = err.Error()
+		return res
 		//log.Fatal(err)
+	}
+
+	res.Pages = totalPages
+	if res.ErrorCode == 1 {
+		res.ErrorCode = 0
+		res.ErrorDesc = ""
+
+		return res
 	}
 
 	return res

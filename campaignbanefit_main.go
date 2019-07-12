@@ -60,7 +60,7 @@ func main() {
 	mainRouter.HandleFunc("/previewproduct/getpreview", getpreview)
 	mainRouter.HandleFunc("/offer/getoffer", getoffer)
 	mainRouter.HandleFunc("/keyword/getkeyword", getkeyword)
-	mainRouter.HandleFunc("/report/getreportcampaign/{campaignid}", getreportcampaignbyid)
+	mainRouter.HandleFunc("/report/getreportcampaign", getreportcampaignbyid).Methods("POST")
 	log.Fatal(http.ListenAndServe(":8000", mainRouter))
 }
 
@@ -155,6 +155,8 @@ func searchcampaign(w http.ResponseWriter, r *http.Request) {
 	// Create db connection to mongo
 	db := Create("", "", "172.19.218.104", "27017", "tvscampaigndb", "campaign")
 
+	var res *st.SearchCampaignResponse
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		panic(err)
@@ -166,8 +168,7 @@ func searchcampaign(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	var res st.ListCampaign
-	res.Campaigns = db.SearchCampaign(req)
+	res = db.SearchCampaign(req)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(res)
@@ -241,11 +242,22 @@ func getkeyword(w http.ResponseWriter, r *http.Request) {
 
 func getreportcampaignbyid(w http.ResponseWriter, r *http.Request) {
 
-	params := mux.Vars(r)
+	//params := mux.Vars(r)
 
 	var res *st.GetListReportCampignResponse
 
-	res = GetReportCampaignByID(params["campaignid"])
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var req st.GetListReportCampignRequest
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		panic(err)
+	}
+
+	res = GetReportCampaignByID(req)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(res)

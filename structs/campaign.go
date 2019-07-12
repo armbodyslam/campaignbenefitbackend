@@ -104,4 +104,29 @@ type SearchCampaignRequest struct {
 		Type    string `json:"type"`
 		Execute string `json:"execute"`
 	} `json:"schedule"`
+	PageSize int            `json:"pagesize"`
+	Page     int            `json:"page"`
+	Sorted   []SortCampaign `json:"sorted"`
+}
+
+// SortCampaign Obj
+type SortCampaign struct {
+	ID   string `json:"id"`
+	Desc bool   `json:"desc"`
+}
+
+// SearchCampaignResponse Obj
+type SearchCampaignResponse struct {
+	ErrorCode int        `json:"errorcode"`
+	ErrorDesc string     `json:"errordesc"`
+	Pages     int        `json:"pages"`
+	Campaigns []Campaign `json:"campaign"`
+}
+
+// NewSearchCampaignResponse Obj
+func NewSearchCampaignResponse() *SearchCampaignResponse {
+	return &SearchCampaignResponse{
+		ErrorCode: 1,
+		ErrorDesc: "Unexpected Error",
+	}
 }

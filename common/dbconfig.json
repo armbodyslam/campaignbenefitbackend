@@ -15,6 +15,13 @@
         "cache": {
             "address": "10.0.0.2",
             "port": 6379
+        },
+        "TVSCAMPAIGN":{
+            "username": "",
+            "password": "",
+            "host": "172.19.218.104",
+            "port": "27017",
+            "dbname": "tvscampaigndb"
         }
     }
 }

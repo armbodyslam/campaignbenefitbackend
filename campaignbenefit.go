@@ -18,9 +18,12 @@ import (
 )
 
 //GetCampaign for get list campaign
-func (db *MongoDBInfo) GetCampaign() []st.Campaign {
+func GetCampaign() []st.Campaign {
 
-	session, err := mgo.Dial(db.URL)
+	var dbMgSource cm.MongoDBInfo
+	dbMgSource = cm.GetDatasourceNameMongo("TVSCAMPAIGN")
+
+	session, err := mgo.Dial(dbMgSource.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +32,7 @@ func (db *MongoDBInfo) GetCampaign() []st.Campaign {
 	// Optional. Switch the session to a monotonic behavior.
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB(db.database).C(db.collection)
+	c := session.DB(dbMgSource.Database).C("campaign")
 	res := []st.Campaign{}
 
 	err = c.Find(bson.M{"status": "A"}).Sort("-campaignid").All(&res)
@@ -43,9 +46,12 @@ func (db *MongoDBInfo) GetCampaign() []st.Campaign {
 }
 
 //GetCustProfile for get list Profile
-func (db *MongoDBInfo) GetCustProfile() []st.CustProfileMaster {
+func GetCustProfile() []st.CustProfileMaster {
 
-	session, err := mgo.Dial(db.URL)
+	var dbMgSource cm.MongoDBInfo
+	dbMgSource = cm.GetDatasourceNameMongo("TVSCAMPAIGN")
+
+	session, err := mgo.Dial(dbMgSource.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +60,7 @@ func (db *MongoDBInfo) GetCustProfile() []st.CustProfileMaster {
 	// Optional. Switch the session to a monotonic behavior.
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB(db.database).C(db.collection)
+	c := session.DB(dbMgSource.Database).C("custprofilemaster")
 	res := []st.CustProfileMaster{}
 
 	err = c.Find(nil).All(&res)
@@ -68,9 +74,12 @@ func (db *MongoDBInfo) GetCustProfile() []st.CustProfileMaster {
 }
 
 //GetPackageMaster for get list campaign
-func (db *MongoDBInfo) GetPackageMaster() []st.PackageMaster {
+func GetPackageMaster() []st.PackageMaster {
 
-	session, err := mgo.Dial(db.URL)
+	var dbMgSource cm.MongoDBInfo
+	dbMgSource = cm.GetDatasourceNameMongo("TVSCAMPAIGN")
+
+	session, err := mgo.Dial(dbMgSource.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -79,7 +88,7 @@ func (db *MongoDBInfo) GetPackageMaster() []st.PackageMaster {
 	// Optional. Switch the session to a monotonic behavior.
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB(db.database).C(db.collection)
+	c := session.DB(dbMgSource.Database).C("packagemaster")
 	res := []st.PackageMaster{}
 
 	err = c.Find(nil).Sort("packageid").All(&res)
@@ -93,9 +102,12 @@ func (db *MongoDBInfo) GetPackageMaster() []st.PackageMaster {
 }
 
 //GetPreviewProduct for get list PreviewProduct
-func (db *MongoDBInfo) GetPreviewProduct() []st.PreviewProduct {
+func GetPreviewProduct() []st.PreviewProduct {
 
-	session, err := mgo.Dial(db.URL)
+	var dbMgSource cm.MongoDBInfo
+	dbMgSource = cm.GetDatasourceNameMongo("TVSCAMPAIGN")
+
+	session, err := mgo.Dial(dbMgSource.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +116,7 @@ func (db *MongoDBInfo) GetPreviewProduct() []st.PreviewProduct {
 	// Optional. Switch the session to a monotonic behavior.
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB(db.database).C(db.collection)
+	c := session.DB(dbMgSource.Database).C("previewproduct")
 	res := []st.PreviewProduct{}
 
 	err = c.Find(nil).Sort("previewproductid").All(&res)
@@ -118,9 +130,12 @@ func (db *MongoDBInfo) GetPreviewProduct() []st.PreviewProduct {
 }
 
 //GetOffer for get list Offer
-func (db *MongoDBInfo) GetOffer() []st.Offer {
+func GetOffer() []st.Offer {
 
-	session, err := mgo.Dial(db.URL)
+	var dbMgSource cm.MongoDBInfo
+	dbMgSource = cm.GetDatasourceNameMongo("TVSCAMPAIGN")
+
+	session, err := mgo.Dial(dbMgSource.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -129,7 +144,7 @@ func (db *MongoDBInfo) GetOffer() []st.Offer {
 	// Optional. Switch the session to a monotonic behavior.
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB(db.database).C(db.collection)
+	c := session.DB(dbMgSource.Database).C("offer")
 	res := []st.Offer{}
 
 	err = c.Find(nil).Sort("offerid").All(&res)
@@ -143,11 +158,14 @@ func (db *MongoDBInfo) GetOffer() []st.Offer {
 }
 
 //GetLastCampaignID for get last campaignID
-func (db *MongoDBInfo) GetLastCampaignID() int {
+func GetLastCampaignID() int {
+
+	var dbMgSource cm.MongoDBInfo
+	dbMgSource = cm.GetDatasourceNameMongo("TVSCAMPAIGN")
 
 	var res int
 
-	session, err := mgo.Dial(db.URL)
+	session, err := mgo.Dial(dbMgSource.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -156,7 +174,7 @@ func (db *MongoDBInfo) GetLastCampaignID() int {
 	// Optional. Switch the session to a monotonic behavior.
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB(db.database).C(db.collection)
+	c := session.DB(dbMgSource.Database).C("campaign")
 	campaign := st.Campaign{}
 
 	err = c.Find(nil).Sort("-campaignid").One(&campaign)
@@ -171,7 +189,10 @@ func (db *MongoDBInfo) GetLastCampaignID() int {
 }
 
 // CreateCampaign for insert new document
-func (db *MongoDBInfo) CreateCampaign(camp st.Campaign) *st.CreateCampaignResponse {
+func CreateCampaign(camp st.Campaign) *st.CreateCampaignResponse {
+
+	var dbMgSource cm.MongoDBInfo
+	dbMgSource = cm.GetDatasourceNameMongo("TVSCAMPAIGN")
 
 	oRes := st.NewCreateCampaignResponse()
 	schedule := camp.Schedule
@@ -184,7 +205,7 @@ func (db *MongoDBInfo) CreateCampaign(camp st.Campaign) *st.CreateCampaignRespon
 
 	camp.Schedule = schedule
 
-	session, err := mgo.Dial(db.URL)
+	session, err := mgo.Dial(dbMgSource.URL)
 	if err != nil {
 		oRes.ErrorCode = 1
 		oRes.ErrorDesc = err.Error()
@@ -196,7 +217,7 @@ func (db *MongoDBInfo) CreateCampaign(camp st.Campaign) *st.CreateCampaignRespon
 	// Optional. Switch the session to a monotonic behavior.
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB(db.database).C(db.collection)
+	c := session.DB(dbMgSource.Database).C("campaign")
 
 	lastcampaign := st.Campaign{}
 	err = c.Find(nil).Sort("-campaignid").One(&lastcampaign)
@@ -305,7 +326,10 @@ func GetKeyword() *st.GetListKeywordResult {
 }
 
 //GetCampaignByID for get list campaign
-func (db *MongoDBInfo) GetCampaignByID(ID string) *st.GetCampaignResponse {
+func GetCampaignByID(ID string) *st.GetCampaignResponse {
+
+	var dbMgSource cm.MongoDBInfo
+	dbMgSource = cm.GetDatasourceNameMongo("TVSCAMPAIGN")
 
 	res := st.NewGetCampaignResponse()
 
@@ -316,7 +340,7 @@ func (db *MongoDBInfo) GetCampaignByID(ID string) *st.GetCampaignResponse {
 		return res
 	}
 
-	session, err := mgo.Dial(db.URL)
+	session, err := mgo.Dial(dbMgSource.URL)
 	if err != nil {
 		res.ErrorCode = 3
 		res.ErrorDesc = err.Error()
@@ -327,7 +351,7 @@ func (db *MongoDBInfo) GetCampaignByID(ID string) *st.GetCampaignResponse {
 	// Optional. Switch the session to a monotonic behavior.
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB(db.database).C(db.collection)
+	c := session.DB(dbMgSource.Database).C("campaign")
 
 	var campaign st.Campaign
 
@@ -491,11 +515,14 @@ func GetReportCampaignByID(reportSearch st.GetListReportCampignRequest) *st.GetL
 }
 
 //CancelCampaign for cancel campaign
-func (db *MongoDBInfo) CancelCampaign(campID int) *st.CancelCampaignResponse {
+func CancelCampaign(campID int) *st.CancelCampaignResponse {
+
+	var dbMgSource cm.MongoDBInfo
+	dbMgSource = cm.GetDatasourceNameMongo("TVSCAMPAIGN")
 
 	res := st.NewCancelCampaignResponse()
 
-	session, err := mgo.Dial(db.URL)
+	session, err := mgo.Dial(dbMgSource.URL)
 	if err != nil {
 		res.ErrorCode = 2
 		res.ErrorDesc = err.Error()
@@ -506,7 +533,7 @@ func (db *MongoDBInfo) CancelCampaign(campID int) *st.CancelCampaignResponse {
 
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB(db.database).C(db.collection)
+	c := session.DB(dbMgSource.Database).C("campaign")
 	err = c.Update(bson.M{"campaignid": campID}, bson.M{"$set": bson.M{"status": "C"}})
 	if err != nil {
 		res.ErrorCode = 3
@@ -526,7 +553,10 @@ func (db *MongoDBInfo) CancelCampaign(campID int) *st.CancelCampaignResponse {
 }
 
 //SearchCampaign for Search Campaign
-func (db *MongoDBInfo) SearchCampaign(campSearch st.SearchCampaignRequest) *st.SearchCampaignResponse {
+func SearchCampaign(campSearch st.SearchCampaignRequest) *st.SearchCampaignResponse {
+
+	var dbMgSource cm.MongoDBInfo
+	dbMgSource = cm.GetDatasourceNameMongo("TVSCAMPAIGN")
 
 	res := st.NewSearchCampaignResponse()
 
@@ -556,7 +586,7 @@ func (db *MongoDBInfo) SearchCampaign(campSearch st.SearchCampaignRequest) *st.S
 
 	skip := size * (pageNo - 1)
 
-	session, err := mgo.Dial(db.URL)
+	session, err := mgo.Dial(dbMgSource.URL)
 	if err != nil {
 
 		res.ErrorCode = 3
@@ -568,7 +598,7 @@ func (db *MongoDBInfo) SearchCampaign(campSearch st.SearchCampaignRequest) *st.S
 	// Optional. Switch the session to a monotonic behavior.
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB(db.database).C(db.collection)
+	c := session.DB(dbMgSource.Database).C("campaign")
 
 	var camID bson.M
 	if campSearch.CampaignID == 0 {

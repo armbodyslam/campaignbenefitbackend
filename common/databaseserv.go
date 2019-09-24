@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"strings"
 
-	config "github.com/micro/go-config"
-	"github.com/micro/go-config/source/file"
+	cf "github.com/spf13/viper"
 )
 
 type product struct {
@@ -20,13 +20,23 @@ func readconfig(profilename string) (string, string, string, string) {
 	var username = ""
 	var password = ""
 	var connectionstring = ""
-	config.Load(file.NewSource(
-		file.WithPath("dbconfig.json"),
-	))
-	dbname = config.Get("hosts", profilename, "dbname").String("")
-	username = config.Get("hosts", profilename, "username").String("")
-	password = config.Get("hosts", profilename, "password").String("")
-	connectionstring = config.Get("hosts", profilename, "connectionstring").String("")
+
+	cf.SetConfigName("dbconfig")
+	cf.AddConfigPath("./common")
+	cf.AutomaticEnv()
+
+	// แปลง _ underscore ใน env เป็น . dot notation ใน viper
+	cf.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	// อ่าน config
+	err := cf.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("fatal error config file: %s \n", err))
+	}
+
+	dbname = fmt.Sprintf("%v", cf.Get("host."+profilename+".dbname"))
+	username = fmt.Sprintf("%v", cf.Get("host."+profilename+".username"))
+	password = fmt.Sprintf("%v", cf.Get("host."+profilename+".password"))
+	connectionstring = fmt.Sprintf("%v", cf.Get("host."+profilename+".connectionstring"))
 	return dbname, username, password, connectionstring
 }
 

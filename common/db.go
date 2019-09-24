@@ -1,11 +1,14 @@
 package common
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
-	config "github.com/micro/go-config"
-	"github.com/micro/go-config/source/file"
+	cf "github.com/spf13/viper"
 )
+
+var tagenv = os.Getenv("ENVAPP")
 
 // DatabaseInfo struct
 type DatabaseInfo struct {
@@ -29,14 +32,23 @@ type MongoDBInfo struct {
 // DBReadConfig function
 func DBReadConfig(profilename string) DatabaseInfo {
 	var dbInfo DatabaseInfo
-	config.Load(file.NewSource(
-		file.WithPath("./common/dbconfig.json"),
-	))
 
-	dbInfo.DBName = config.Get("hosts", profilename, "dbname").String("")
-	dbInfo.Username = config.Get("hosts", profilename, "username").String("")
-	dbInfo.Password = config.Get("hosts", profilename, "password").String("")
-	dbInfo.HostIP = config.Get("hosts", profilename, "hostip").String("")
+	cf.SetConfigName("dbconfig")
+	cf.AddConfigPath("./common")
+	cf.AutomaticEnv()
+
+	// แปลง _ underscore ใน env เป็น . dot notation ใน viper
+	cf.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	// อ่าน config
+	err := cf.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("fatal error config file: %s \n", err))
+	}
+
+	dbInfo.DBName = fmt.Sprintf("%v", cf.Get(tagenv+"."+profilename+".dbname"))
+	dbInfo.Username = fmt.Sprintf("%v", cf.Get(tagenv+"."+profilename+".username"))
+	dbInfo.Password = fmt.Sprintf("%v", cf.Get(tagenv+"."+profilename+".password"))
+	dbInfo.HostIP = fmt.Sprintf("%v", cf.Get(tagenv+"."+profilename+".hostip"))
 
 	return dbInfo
 }
@@ -47,7 +59,7 @@ func GetDatasourceName(profilename string) string {
 	dbInfo = DBReadConfig(profilename)
 
 	var constr string
-	constr = dbInfo.Username + "/" + dbInfo.Password + "@" + dbInfo.HostIP + dbInfo.DBName
+	constr = dbInfo.Username + "/" + dbInfo.Password + "@" + dbInfo.DBName
 
 	return constr
 }
@@ -55,15 +67,23 @@ func GetDatasourceName(profilename string) string {
 // GetDatasourceNameMongo for connect mongodb
 func GetDatasourceNameMongo(profilename string) MongoDBInfo {
 	var mgDbInfo MongoDBInfo
-	config.Load(file.NewSource(
-		file.WithPath("./common/dbconfig.json"),
-	))
+	cf.SetConfigName("dbconfig")
+	cf.AddConfigPath("./common")
+	cf.AutomaticEnv()
 
-	mgDbInfo.User = config.Get("hosts", profilename, "username").String("")
-	mgDbInfo.Password = config.Get("hosts", profilename, "password").String("")
-	mgDbInfo.Host = config.Get("hosts", profilename, "host").String("")
-	mgDbInfo.Port = config.Get("hosts", profilename, "port").String("")
-	mgDbInfo.Database = config.Get("hosts", profilename, "dbname").String("")
+	// แปลง _ underscore ใน env เป็น . dot notation ใน viper
+	cf.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	// อ่าน config
+	err := cf.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("fatal error config file: %s \n", err))
+	}
+
+	mgDbInfo.User = fmt.Sprintf("%v", cf.Get(tagenv+"."+profilename+".username"))
+	mgDbInfo.Password = fmt.Sprintf("%v", cf.Get(tagenv+"."+profilename+".password"))
+	mgDbInfo.Host = fmt.Sprintf("%v", cf.Get(tagenv+"."+profilename+".host"))
+	mgDbInfo.Port = fmt.Sprintf("%v", cf.Get(tagenv+"."+profilename+".port"))
+	mgDbInfo.Database = fmt.Sprintf("%v", cf.Get(tagenv+"."+profilename+".dbname"))
 
 	var url string
 	if mgDbInfo.User == "" || mgDbInfo.Password == "" {

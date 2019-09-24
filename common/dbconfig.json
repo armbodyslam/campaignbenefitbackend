@@ -1,5 +1,5 @@
 {
-    "hosts": {
+    "develop": {
         "ICC": {
             "dbname": "//172.22.204.115:1521/ICC",
             "username": "bgweb",
